@@ -77,7 +77,9 @@ function updateWranglerJsonc() {
 }
 
 function runSetupCommands() {
-    const commands = [];
+    const commands = [
+    "bun add vite-plugin-pwa@^0.20.5"
+];
     
     if (commands.length === 0) {
         console.log('⊘ No setup commands to run');
