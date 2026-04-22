@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocalStorage } from '@/lib/store';
+import { cn } from '@/lib/utils';
 import { ShieldCheck, Plus, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 export function LedgerPage() {
