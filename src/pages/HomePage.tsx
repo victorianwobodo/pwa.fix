@@ -1,138 +1,91 @@
-// Home page of the app.
-// Currently a demo placeholder "please wait" screen.
-// Replace this file with your actual app UI. Do not delete it to use some other file as homepage. Simply replace the entire contents of this file.
-
-import { useEffect, useMemo, useState } from 'react'
-import { Sparkles } from 'lucide-react'
-
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { HAS_TEMPLATE_DEMO, TemplateDemo } from '@/components/TemplateDemo'
-import { Button } from '@/components/ui/button'
-import { Toaster, toast } from '@/components/ui/sonner'
-
-function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
+import React from 'react';
+import { useLocalStorage, getDayOfYear } from '@/lib/store';
+import { User, Shield, Battery, Zap, ChevronRight } from 'lucide-react';
+const AFFIRMATIONS = [
+  "My voice is a valuable strategic asset.",
+  "Setting boundaries increases my professional impact.",
+  "Direct communication is a form of kindness.",
+  "I am the leader of my own time and energy.",
+  "Clarity is more important than being liked.",
+  "I trust my expertise and my instincts.",
+  "I don't need permission to lead.",
+  "Rest is a requirement for excellence.",
+  "My presence is intentional and powerful.",
+  "I speak my truth with calm confidence.",
+  "I am building a sustainable leadership path.",
+  "My limits are my strengths."
+];
 export function HomePage() {
-  const [coins, setCoins] = useState(0)
-  const [isRunning, setIsRunning] = useState(false)
-  const [startedAt, setStartedAt] = useState<number | null>(null)
-  const [elapsedMs, setElapsedMs] = useState(0)
-
-  useEffect(() => {
-    if (!isRunning || startedAt === null) return
-
-    const t = setInterval(() => {
-      setElapsedMs(Date.now() - startedAt)
-    }, 250)
-
-    return () => clearInterval(t)
-  }, [isRunning, startedAt])
-
-  const formatted = useMemo(() => formatDuration(elapsedMs), [elapsedMs])
-
-  const onPleaseWait = () => {
-    setCoins((c) => c + 1)
-
-    if (!isRunning) {
-      // Resume from the current elapsed time
-      setStartedAt(Date.now() - elapsedMs)
-      setIsRunning(true)
-      toast.success('Building your app…', {
-        description: "Hang tight — we're setting everything up.",
-      })
-      return
-    }
-
-    setIsRunning(false)
-    toast.info('Still working…', {
-      description: 'You can come back in a moment.',
-    })
-  }
-
-  const onReset = () => {
-    setCoins(0)
-    setIsRunning(false)
-    setStartedAt(null)
-    setElapsedMs(0)
-    toast('Reset complete')
-  }
-
-  const onAddCoin = () => {
-    setCoins((c) => c + 1)
-    toast('Coin added')
-  }
-
+  const [identityRules, setIdentityRules] = useLocalStorage<string[]>('Ascerta_identity_rules', [
+    'I do not apologize for having needs.',
+    'I finish my sentences without trailing off.',
+    'I pause before saying yes.'
+  ]);
+  const [energyState] = useLocalStorage<string>('Ascerta_last_energy', 'high');
+  const dayIndex = getDayOfYear() % 12;
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
-      <ThemeToggle />
-      <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
-
-      <div className="text-center space-y-8 relative z-10 animate-fade-in w-full">
-        <div className="flex justify-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-primary floating">
-            <Sparkles className="w-8 h-8 text-white rotating" />
-          </div>
+    <div className="p-6 space-y-8 animate-in fade-in duration-700">
+      <header className="space-y-1">
+        <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Tuesday, Oct 24</p>
+        <h1 className="text-2xl font-semibold text-gray-900">Welcome, Elena</h1>
+      </header>
+      {/* Energy Banner */}
+      <div className={`p-4 ${energyState === 'low' ? 'bg-soft-amber' : 'bg-soft-purple'} flex items-start gap-4`}>
+        <div className="mt-1">
+          <Zap size={20} className="text-ascerta-purple" />
         </div>
-
-        <div className="space-y-3">
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
-            Creating your <span className="text-gradient">app</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
-            Your application would be ready soon.
+        <div>
+          <h4 className="text-sm font-semibold mb-1">Capacity Snapshot</h4>
+          <p className="text-xs text-gray-600 leading-relaxed">
+            {energyState === 'low' 
+              ? "Energy is dipping. Prioritize structural frames today and delegate where possible."
+              : "Energy is stable. A good day for high-stakes conversations and political strategy."}
           </p>
         </div>
-
-        {HAS_TEMPLATE_DEMO ? (
-          <div className="max-w-5xl mx-auto text-left">
-            <TemplateDemo />
-          </div>
-        ) : (
-          <>
-            <div className="flex justify-center gap-4">
-              <Button
-                size="lg"
-                onClick={onPleaseWait}
-                className="btn-gradient px-8 py-4 text-lg font-semibold hover:-translate-y-0.5 transition-all duration-200"
-                aria-live="polite"
-              >
-                Please Wait
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-              <div>
-                Time elapsed:{' '}
-                <span className="font-medium tabular-nums text-foreground">{formatted}</span>
-              </div>
-              <div>
-                Coins:{' '}
-                <span className="font-medium tabular-nums text-foreground">{coins}</span>
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={onReset}>
-                Reset
-              </Button>
-              <Button variant="outline" size="sm" onClick={onAddCoin}>
-                Add Coin
-              </Button>
-            </div>
-          </>
-        )}
       </div>
-
-      <footer className="absolute bottom-8 text-center text-muted-foreground/80">
-        <p>Powered by Cloudflare</p>
-      </footer>
-
-      <Toaster richColors closeButton />
+      {/* Affirmation */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Today's Anchor</h3>
+        <p className="font-serif italic text-xl leading-relaxed text-ascerta-purple">
+          "{AFFIRMATIONS[dayIndex]}"
+        </p>
+      </div>
+      {/* Identity Rules */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-end">
+          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Identity Rules</h3>
+          <Shield size={16} className="text-gray-300" />
+        </div>
+        <div className="space-y-2">
+          {identityRules.map((rule, i) => (
+            <div key={i} className="p-4 bg-white border border-gray-100 text-sm flex items-center justify-between group">
+              <span>{rule}</span>
+              <ChevronRight size={14} className="text-gray-300 group-hover:text-ascerta-purple transition-colors" />
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Capacity Grid */}
+      <div className="space-y-4">
+        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Daily Pulse</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <PulseItem label="Nervous System" color="bg-soft-green" />
+          <PulseItem label="Voice Usage" color="bg-soft-pink" />
+          <PulseItem label="Spatial Depth" color="bg-soft-blue" />
+          <PulseItem label="Boundary Load" color="bg-soft-coral" />
+        </div>
+      </div>
     </div>
-  )
+  );
+}
+function PulseItem({ label, color }: { label: string; color: string }) {
+  return (
+    <div className={`p-4 ${color} flex flex-col justify-between h-24`}>
+      <span className="text-xs font-medium text-gray-800">{label}</span>
+      <div className="flex justify-between items-end">
+        <span className="text-lg font-bold">7.5</span>
+        <div className="w-2 h-2 rounded-full bg-gray-900/10" />
+      </div>
+    </div>
+  );
 }
