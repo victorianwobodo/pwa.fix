@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useAscertaStore } from '@/lib/store';
 import { PrepareOverlay } from '@/components/PrepareOverlay';
 import { AnimatePresence } from 'framer-motion';
+import { Toaster } from 'sonner';
 export function MobileLayout() {
   const isPrepareOpen = useAscertaStore(s => s.isPrepareOpen);
   const setPrepareOpen = useAscertaStore(s => s.setPrepareOpen);
@@ -34,6 +35,17 @@ export function MobileLayout() {
         <AnimatePresence>
           {isPrepareOpen && <PrepareOverlay />}
         </AnimatePresence>
+        <Toaster 
+          position="top-center" 
+          toastOptions={{
+            style: {
+              borderRadius: '0px',
+              border: '1px solid #E5E7EB',
+              boxShadow: 'none',
+              fontFamily: 'Inter, sans-serif'
+            }
+          }}
+        />
       </div>
     </div>
   );

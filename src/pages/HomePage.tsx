@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useLocalStorage, getDayOfYear, getTodayStr, AFFIRMATIONS, useDailyLog } from '@/lib/store';
-import { Zap, Edit3, Bell, Pencil, Check, X } from 'lucide-react';
+import { Zap, Bell, Pencil, Check, X, Plus, Trash2 } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 export function HomePage() {
   const today = getTodayStr();
   const [userName, setUserName] = useLocalStorage<string>('Ascerta_user_name', 'Leader');
-  const [identityRules] = useLocalStorage<string[]>('Ascerta_identity_rules', [
+  const [identityRules, setIdentityRules] = useLocalStorage<string[]>('Ascerta_identity_rules', [
     'I do not apologize for having needs.',
     'I finish my sentences without trailing off.',
     'I pause before saying yes.'
@@ -24,6 +24,8 @@ export function HomePage() {
   });
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameBuffer, setNameBuffer] = useState(userName);
+  const [newRule, setNewRule] = useState('');
+  const [isAddingRule, setIsAddingRule] = useState(false);
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 5) return 'Good night';
@@ -50,6 +52,16 @@ export function HomePage() {
       setIsEditingName(false);
     }
   };
+  const handleAddRule = () => {
+    if (newRule.trim()) {
+      setIdentityRules([...identityRules, newRule.trim()]);
+      setNewRule('');
+      setIsAddingRule(false);
+    }
+  };
+  const handleDeleteRule = (index: number) => {
+    setIdentityRules(identityRules.filter((_, i) => i !== index));
+  };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12 space-y-8 animate-in fade-in duration-700">
@@ -66,10 +78,10 @@ export function HomePage() {
                   className="h-8 text-lg font-semibold rounded-none border-gray-200 focus:ring-ascerta-purple"
                   autoFocus
                 />
-                <button onClick={handleSaveName} className="text-green-600 p-1">
+                <button onClick={handleSaveName} className="text-ascerta-purple p-1">
                   <Check size={18} />
                 </button>
-                <button onClick={() => { setIsEditingName(false); setNameBuffer(userName); }} className="text-red-400 p-1">
+                <button onClick={() => { setIsEditingName(false); setNameBuffer(userName); }} className="text-gray-400 p-1">
                   <X size={18} />
                 </button>
               </div>
@@ -78,7 +90,7 @@ export function HomePage() {
                 <h1 className="text-2xl font-semibold text-gray-900 truncate">
                   {greeting}, {userName}
                 </h1>
-                <button 
+                <button
                   onClick={() => setIsEditingName(true)}
                   className="p-1 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
@@ -148,11 +160,41 @@ export function HomePage() {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Identity Rules</h3>
+            <button 
+              onClick={() => setIsAddingRule(true)} 
+              className="text-ascerta-purple flex items-center gap-1 text-[10px] font-bold uppercase"
+            >
+              <Plus size={12} /> Add Rule
+            </button>
           </div>
+          {isAddingRule && (
+            <div className="flex items-center gap-2 mb-4 animate-in slide-in-from-top-1 duration-200">
+              <Input
+                value={newRule}
+                onChange={(e) => setNewRule(e.target.value)}
+                placeholder="New rule (e.g. I pause before saying yes)"
+                className="h-10 text-sm rounded-none border-gray-200"
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleAddRule()}
+              />
+              <button onClick={handleAddRule} className="text-ascerta-purple p-2 border border-gray-100">
+                <Check size={18} />
+              </button>
+              <button onClick={() => setIsAddingRule(false)} className="text-gray-400 p-2 border border-gray-100">
+                <X size={18} />
+              </button>
+            </div>
+          )}
           <div className="space-y-2">
             {identityRules.map((rule, i) => (
-              <div key={i} className="p-4 bg-white border-l-2 border-ascerta-purple border-y border-r border-gray-100">
-                <p className="font-serif text-sm italic text-gray-800 leading-relaxed">"{rule}"</p>
+              <div key={i} className="p-4 bg-white border-l-2 border-ascerta-purple border-y border-r border-gray-100 flex justify-between items-start group">
+                <p className="font-serif text-sm italic text-gray-800 leading-relaxed pr-4">"{rule}"</p>
+                <button 
+                  onClick={() => handleDeleteRule(i)}
+                  className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             ))}
           </div>

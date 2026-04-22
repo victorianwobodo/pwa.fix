@@ -4,6 +4,7 @@ import { Check, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 const PILLARS = [
   { id: 'body', name: 'Body', color: 'bg-soft-green', icon: '👤' },
   { id: 'mind', name: 'Mind', color: 'bg-soft-blue', icon: '🧠' },
@@ -15,10 +16,20 @@ const PILLARS = [
 export function CheckInPage() {
   const [log, setLog] = useDailyLog<Record<string, any>>('Ascerta_checkin', {});
   const [voiceLog, setVoiceLog] = useDailyLog<any>('Ascerta_voice_daily', {});
+  const [energyAudit, setEnergyAudit] = useDailyLog<Record<string, string>>('Ascerta_energy_audit', {});
   const isShameTriggered = useShameProtocol();
   const [activePillar, setActivePillar] = useState<string | null>(null);
   const savePillar = (id: string, value: any) => {
     setLog(prev => ({ ...prev, [id]: value }));
+  };
+  const handleEnergyAudit = (activity: string, state: string) => {
+    setEnergyAudit(prev => ({ ...prev, [activity]: state }));
+  };
+  const handleComplete = () => {
+    toast.success("Entry Logged", {
+      description: "Leadership infrastructure updated.",
+      className: "rounded-none border-ascerta-purple"
+    });
   };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -120,14 +131,30 @@ export function CheckInPage() {
               <div key={activity} className="p-4 border border-gray-100 flex items-center justify-between bg-white">
                 <span className="text-sm font-medium">{activity}</span>
                 <div className="flex gap-2">
-                  <button className="px-3 py-1 text-[9px] font-bold uppercase border border-gray-100 hover:bg-soft-green">Restored</button>
-                  <button className="px-3 py-1 text-[9px] font-bold uppercase border border-gray-100 hover:bg-soft-coral">Depleted</button>
+                  <button 
+                    onClick={() => handleEnergyAudit(activity, 'restored')}
+                    className={cn(
+                      "px-3 py-1 text-[9px] font-bold uppercase border transition-colors",
+                      energyAudit[activity] === 'restored' ? "bg-soft-green border-green-200" : "border-gray-100 hover:bg-soft-green"
+                    )}
+                  >
+                    Restored
+                  </button>
+                  <button 
+                    onClick={() => handleEnergyAudit(activity, 'depleted')}
+                    className={cn(
+                      "px-3 py-1 text-[9px] font-bold uppercase border transition-colors",
+                      energyAudit[activity] === 'depleted' ? "bg-soft-coral border-coral-200" : "border-gray-100 hover:bg-soft-coral"
+                    )}
+                  >
+                    Depleted
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <Button className="w-full h-14 bg-ascerta-purple text-white font-bold uppercase tracking-widest" onClick={() => alert('Entry Logged')}>
+        <Button className="w-full h-14 bg-ascerta-purple text-white font-bold uppercase tracking-widest" onClick={handleComplete}>
           Complete Daily Entry
         </Button>
       </div>

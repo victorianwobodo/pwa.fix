@@ -1,8 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocalStorage } from '@/lib/store';
-import { ShieldCheck, TrendingDown, Layers } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import { ShieldCheck, Plus, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 export function LedgerPage() {
+  const [beliefs, setBeliefs] = useLocalStorage<string[]>('Ascerta_operating_beliefs', [
+    "My contribution is not defined by my availability.",
+    "I am paid for my judgment, not my speed.",
+    "I belong at every table I sit at."
+  ]);
+  const [checkedBeliefs, setCheckedBeliefs] = useLocalStorage<string[]>('Ascerta_checked_beliefs', []);
+  const [newBelief, setNewBelief] = useState('');
+  const toggleBelief = (belief: string) => {
+    if (checkedBeliefs.includes(belief)) {
+      setCheckedBeliefs(checkedBeliefs.filter(b => b !== belief));
+    } else {
+      setCheckedBeliefs([...checkedBeliefs, belief]);
+    }
+  };
+  const addBelief = () => {
+    if (newBelief.trim()) {
+      setBeliefs([...beliefs, newBelief.trim()]);
+      setNewBelief('');
+    }
+  };
+  const deleteBelief = (index: number) => {
+    const beliefToDelete = beliefs[index];
+    setBeliefs(beliefs.filter((_, i) => i !== index));
+    setCheckedBeliefs(checkedBeliefs.filter(b => b !== beliefToDelete));
+  };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12 space-y-8 animate-in fade-in duration-700">
@@ -29,20 +54,20 @@ export function LedgerPage() {
               <table className="w-full text-left border-collapse min-w-[300px]">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="p-3 text-[9px] font-bold uppercase text-gray-400">Area</th>
-                    <th className="p-3 text-[9px] font-bold uppercase text-gray-400">Sacrifice</th>
-                    <th className="p-3 text-[9px] font-bold uppercase text-gray-400">Worth It?</th>
+                    <th className="p-4 text-[9px] font-bold uppercase text-gray-400">Area</th>
+                    <th className="p-4 text-[9px] font-bold uppercase text-gray-400">Sacrifice</th>
+                    <th className="p-4 text-[9px] font-bold uppercase text-gray-400 text-center">Worth It?</th>
                   </tr>
                 </thead>
                 <tbody>
                   {['Financial', 'Social', 'Creative', 'Leisure', 'Health'].map(area => (
                     <tr key={area} className="border-b border-gray-50 last:border-0">
-                      <td className="p-3 text-xs font-bold uppercase whitespace-nowrap">{area}</td>
-                      <td className="p-3 text-[10px] text-gray-500 italic font-serif">Variable</td>
-                      <td className="p-3">
-                        <div className="flex gap-1">
-                          <div className="w-3 h-3 border border-gray-200 shrink-0" />
-                          <div className="w-3 h-3 border border-gray-200 shrink-0" />
+                      <td className="p-4 text-xs font-bold uppercase whitespace-nowrap">{area}</td>
+                      <td className="p-4 text-[10px] text-gray-500 italic font-serif">Variable</td>
+                      <td className="p-4">
+                        <div className="flex justify-center gap-3">
+                          <button className="w-6 h-6 border border-gray-200 active:bg-soft-green transition-colors" />
+                          <button className="w-6 h-6 border border-gray-200 active:bg-soft-coral transition-colors" />
                         </div>
                       </td>
                     </tr>
@@ -64,20 +89,40 @@ export function LedgerPage() {
         <section className="space-y-4">
           <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Worth Beliefs</h3>
           <div className="space-y-2">
-            {[
-              "My contribution is not defined by my availability.",
-              "I am paid for my judgment, not my speed.",
-              "I belong at every table I sit at."
-            ].map((belief, i) => (
-              <label key={i} className="flex items-center gap-3 p-4 bg-gray-50 text-xs cursor-pointer border border-transparent hover:border-gray-200 transition-colors">
-                <input type="checkbox" className="w-4 h-4 border-gray-300 rounded-none accent-ascerta-purple" />
-                <span>{belief}</span>
-              </label>
+            {beliefs.map((belief, i) => (
+              <div key={i} className="flex items-center gap-3 group">
+                <label className="flex-1 flex items-center gap-3 p-4 bg-gray-50 text-xs cursor-pointer border border-transparent hover:border-gray-200 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    checked={checkedBeliefs.includes(belief)}
+                    onChange={() => toggleBelief(belief)}
+                    className="w-4 h-4 border-gray-300 rounded-none accent-ascerta-purple" 
+                  />
+                  <span className={cn(checkedBeliefs.includes(belief) && "line-through text-gray-400")}>{belief}</span>
+                </label>
+                <button 
+                  onClick={() => deleteBelief(i)}
+                  className="p-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             ))}
-            <input
-              placeholder="+ New operating belief"
-              className="w-full p-4 border border-gray-100 text-xs outline-none bg-white focus:border-ascerta-purple transition-colors"
-            />
+            <div className="flex gap-2 pt-2">
+              <Input
+                value={newBelief}
+                onChange={(e) => setNewBelief(e.target.value)}
+                placeholder="+ New operating belief"
+                className="w-full h-12 border-gray-100 rounded-none text-xs outline-none bg-white focus:ring-ascerta-purple"
+                onKeyDown={(e) => e.key === 'Enter' && addBelief()}
+              />
+              <button 
+                onClick={addBelief}
+                className="px-4 border border-gray-100 bg-white text-ascerta-purple active:bg-gray-50 transition-colors"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
           </div>
         </section>
       </div>

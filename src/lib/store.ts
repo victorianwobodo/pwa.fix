@@ -35,7 +35,6 @@ export const AFFIRMATIONS = [
 ];
 // Persistent Storage Hook with cross-tab/key-change synchronization
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
-  // Use a ref to track the current key to detect changes without re-initializing during render
   const keyRef = useRef(key);
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
@@ -47,8 +46,21 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
       return initialValue;
     }
   });
-  // Synchronize state if the key changes (e.g. date transition)
   useEffect(() => {
+    const handleStorageChange = (e: StorageEvent | CustomEvent) => {
+      const eventKey = e instanceof StorageEvent ? e.key : (e as CustomEvent).detail?.key;
+      if (eventKey === key) {
+        try {
+          const item = window.localStorage.getItem(key);
+          setStoredValue(item ? JSON.parse(item) : initialValue);
+        } catch (err) {
+          console.error("Sync error", err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('local-storage-sync', handleStorageChange as EventListener);
+    // Key change synchronization
     if (keyRef.current !== key) {
       keyRef.current = key;
       try {
@@ -58,12 +70,18 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
         setStoredValue(initialValue);
       }
     }
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('local-storage-sync', handleStorageChange as EventListener);
+    };
   }, [key, initialValue]);
   const setValue = (value: T | ((prev: T) => T)) => {
     try {
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      // Dispatch custom event for intra-tab synchronization
+      window.dispatchEvent(new CustomEvent('local-storage-sync', { detail: { key } }));
     } catch (error) {
       console.error(`Error setting localStorage key "${key}":`, error);
     }
@@ -78,35 +96,46 @@ export function useDailyLog<T>(prefix: string, initialValue: T) {
 }
 // Shame Protocol Logic: Check if Voice Pillar is missing for last 5 days
 export function useShameProtocol() {
-  const isTriggered = useMemo(() => {
-    let missingCount = 0;
-    const checkDays = 5;
-    for (let i = 0; i < checkDays; i++) {
-      const d = format(subDays(new Date(), i), 'yyyy-MM-dd');
-      const data = window.localStorage.getItem(`Ascerta_voice_daily_${d}`);
-      if (!data) missingCount++;
-    }
-    return missingCount >= checkDays;
+  const [isTriggered, setIsTriggered] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      let missingCount = 0;
+      const checkDays = 5;
+      for (let i = 0; i < checkDays; i++) {
+        const d = format(subDays(new Date(), i), 'yyyy-MM-dd');
+        const data = window.localStorage.getItem(`Ascerta_voice_daily_${d}`);
+        if (!data) missingCount++;
+      }
+      setIsTriggered(missingCount >= checkDays);
+    };
+    check();
+    window.addEventListener('local-storage-sync', check);
+    return () => window.removeEventListener('local-storage-sync', check);
   }, []);
   return isTriggered;
 }
 // Streak Calculation
 export function useStreak() {
-  const streak = useMemo(() => {
-    let count = 0;
-    let curr = new Date();
-    // Safety limit to prevent infinite loops if storage is weird
-    for (let i = 0; i < 365; i++) {
-      const d = format(curr, 'yyyy-MM-dd');
-      const data = window.localStorage.getItem(`Ascerta_checkin_${d}`);
-      if (data) {
-        count++;
-        curr = subDays(curr, 1);
-      } else {
-        break;
+  const [streak, setStreak] = useState(0);
+  useEffect(() => {
+    const calc = () => {
+      let count = 0;
+      let curr = new Date();
+      for (let i = 0; i < 365; i++) {
+        const d = format(curr, 'yyyy-MM-dd');
+        const data = window.localStorage.getItem(`Ascerta_checkin_${d}`);
+        if (data) {
+          count++;
+          curr = subDays(curr, 1);
+        } else {
+          break;
+        }
       }
-    }
-    return count;
+      setStreak(count);
+    };
+    calc();
+    window.addEventListener('local-storage-sync', calc);
+    return () => window.removeEventListener('local-storage-sync', calc);
   }, []);
   return streak;
 }

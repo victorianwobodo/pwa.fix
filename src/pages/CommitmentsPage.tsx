@@ -1,11 +1,19 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLocalStorage } from '@/lib/store';
-import { TrendingUp, Users, CheckCircle2 } from 'lucide-react';
+import { useLocalStorage, useStreak } from '@/lib/store';
+import { CheckCircle2, RotateCcw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 export function CommitmentsPage() {
   const [recoveryReps] = useLocalStorage('Ascerta_recovery_reps', 0);
+  const streak = useStreak();
+  const [weeklyNo, setWeeklyNo] = useLocalStorage('Ascerta_weekly_no', '');
+  const [weeklyWin, setWeeklyWin] = useLocalStorage('Ascerta_weekly_win', '');
+  const [networkJournal, setNetworkJournal] = useLocalStorage('Ascerta_network_journal', '');
+  const handleResetReview = () => {
+    setWeeklyNo('');
+    setWeeklyWin('');
+  };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12 space-y-8 animate-in fade-in duration-700">
@@ -28,7 +36,7 @@ export function CommitmentsPage() {
           <TabsContent value="weekly" className="py-6 space-y-8 animate-in fade-in slide-in-from-bottom-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-6 bg-soft-green flex flex-col items-center justify-center gap-2 h-32">
-                <span className="text-3xl font-bold">5 / 7</span>
+                <span className="text-3xl font-bold">{streak} / 7</span>
                 <p className="text-[9px] font-bold uppercase text-gray-600 text-center">Advocacy Streak</p>
               </div>
               <div className="p-6 bg-soft-purple flex flex-col items-center justify-center gap-2 h-32">
@@ -37,15 +45,30 @@ export function CommitmentsPage() {
               </div>
             </div>
             <div className="space-y-4">
-              <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Behavioral Review</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Behavioral Review</h3>
+                <button onClick={handleResetReview} className="text-[9px] font-bold text-gray-400 flex items-center gap-1 uppercase">
+                  <RotateCcw size={10} /> Reset
+                </button>
+              </div>
               <div className="space-y-4">
                 <div>
                   <p className="text-xs font-bold uppercase text-gray-500 mb-2">What did I say 'no' to this week?</p>
-                  <Textarea className="border-gray-100 rounded-none min-h-[80px] font-serif italic text-sm" placeholder="..." />
+                  <Textarea 
+                    value={weeklyNo}
+                    onChange={(e) => setWeeklyNo(e.target.value)}
+                    className="border-gray-100 rounded-none min-h-[80px] font-serif italic text-sm" 
+                    placeholder="..." 
+                  />
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase text-gray-500 mb-2">My primary leadership win</p>
-                  <Textarea className="border-gray-100 rounded-none min-h-[80px] font-serif italic text-sm" placeholder="..." />
+                  <Textarea 
+                    value={weeklyWin}
+                    onChange={(e) => setWeeklyWin(e.target.value)}
+                    className="border-gray-100 rounded-none min-h-[80px] font-serif italic text-sm" 
+                    placeholder="..." 
+                  />
                 </div>
               </div>
             </div>
@@ -55,13 +78,13 @@ export function CommitmentsPage() {
               <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Communication Dots</h3>
               <div className="p-4 bg-white border border-gray-100 space-y-4">
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase text-coral-600">Passive/Hedging</p>
+                  <p className="text-[10px] font-bold uppercase text-coral-600">Passive / Hedging</p>
                   <div className="flex gap-1 flex-wrap">
                     {Array.from({length: 8}).map((_, i) => <div key={i} className="w-3 h-3 rounded-full bg-soft-coral" />)}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase text-green-600">Assertive/Direct</p>
+                  <p className="text-[10px] font-bold uppercase text-green-600">Assertive / Direct</p>
                   <div className="flex gap-1 flex-wrap">
                     {Array.from({length: 12}).map((_, i) => <div key={i} className="w-3 h-3 rounded-full bg-soft-green" />)}
                   </div>
@@ -97,7 +120,12 @@ export function CommitmentsPage() {
             </div>
             <div className="space-y-2">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Network Journal</p>
-              <Textarea className="border-gray-100 rounded-none min-h-[120px] font-serif italic text-sm" placeholder="Who did I advocate for this week?" />
+              <Textarea 
+                value={networkJournal}
+                onChange={(e) => setNetworkJournal(e.target.value)}
+                className="border-gray-100 rounded-none min-h-[120px] font-serif italic text-sm" 
+                placeholder="Who did I advocate for this week?" 
+              />
             </div>
           </TabsContent>
           <TabsContent value="quarterly" className="py-6 space-y-8 animate-in fade-in slide-in-from-bottom-2">

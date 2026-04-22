@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, Info, Timer, CheckCircle } from 'lucide-react';
+import { X, Info, Timer, RotateCcw } from 'lucide-react';
 import { useAscertaStore, useLocalStorage } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 export function PrepareOverlay() {
   const setPrepareOpen = useAscertaStore(s => s.setPrepareOpen);
   const [step, setStep] = useState(1);
@@ -22,6 +21,14 @@ export function PrepareOverlay() {
     }
     return () => clearInterval(interval);
   }, [isTimerActive, timer]);
+  const startTimer = useCallback(() => {
+    setTimer(60);
+    setIsTimerActive(true);
+  }, []);
+  const resetTimer = useCallback(() => {
+    setTimer(60);
+    setIsTimerActive(false);
+  }, []);
   const handleFinish = () => {
     const newEntry = { ...ask, timestamp: new Date().toISOString() };
     setPrepareLog([newEntry, ...prepareLog]);
@@ -49,9 +56,9 @@ export function PrepareOverlay() {
               <h3 className="text-[10px] font-bold mb-4 text-gray-500 uppercase tracking-widest">Step 1: Somatic Check</h3>
               <div className="grid grid-cols-2 gap-3">
                 {['Tense Jaw', 'Quick Breath', 'Tight Chest', 'Locked Knees', 'Fixed Gaze', 'High Shoulders'].map(item => (
-                  <button 
-                    key={item} 
-                    onClick={() => { setTimer(60); setIsTimerActive(true); }}
+                  <button
+                    key={item}
+                    onClick={startTimer}
                     className="p-4 border border-gray-100 text-left text-xs uppercase font-bold text-gray-600 hover:bg-soft-purple active:bg-soft-purple transition-colors"
                   >
                     {item}
@@ -65,10 +72,15 @@ export function PrepareOverlay() {
                   <Timer className="text-ascerta-purple animate-pulse" />
                   <span className="font-serif italic text-sm">Regulation Breath...</span>
                 </div>
-                <span className="text-xl font-bold">{timer}s</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-xl font-bold">{timer}s</span>
+                  <button onClick={resetTimer} className="text-gray-400">
+                    <RotateCcw size={16} />
+                  </button>
+                </div>
               </div>
             )}
-            <Button onClick={() => setStep(2)} className="w-full h-14 bg-ascerta-purple uppercase font-bold tracking-widest">Regulated. Continue.</Button>
+            <Button onClick={() => setStep(2)} className="w-full h-14 bg-ascerta-purple uppercase font-bold tracking-widest rounded-none">Regulated. Continue.</Button>
           </div>
         )}
         {step === 2 && (
@@ -97,7 +109,7 @@ export function PrepareOverlay() {
             <div className="p-6 bg-soft-green text-sm font-serif italic leading-relaxed">
               "{ask.who || '[Name]'}, I am requesting {ask.what || '[request]'}. This is necessary because {ask.why || '[justification]'}."
             </div>
-            <Button onClick={() => setStep(3)} className="w-full h-14 bg-ascerta-purple uppercase font-bold tracking-widest">Script Set. Anchor.</Button>
+            <Button onClick={() => setStep(3)} className="w-full h-14 bg-ascerta-purple uppercase font-bold tracking-widest rounded-none">Script Set. Anchor.</Button>
           </div>
         )}
         {step === 3 && (
@@ -106,16 +118,16 @@ export function PrepareOverlay() {
             <div className="p-10 border-2 border-ascerta-purple text-center bg-soft-purple/30">
               <p className="font-serif italic text-xl text-ascerta-purple leading-relaxed">"{randomRule}"</p>
             </div>
-            <Button onClick={handleFinish} className="w-full h-14 bg-ascerta-purple uppercase font-bold tracking-widest">I Am Ready</Button>
+            <Button onClick={handleFinish} className="w-full h-14 bg-ascerta-purple uppercase font-bold tracking-widest rounded-none">I Am Ready</Button>
             <div className="pt-8 space-y-4">
               <div className="p-4 border-l-2 border-ascerta-purple bg-gray-50 flex items-center justify-between">
                 <div>
                   <h4 className="text-[10px] font-bold uppercase tracking-widest">Recovery Protocol</h4>
                   <p className="text-[11px] text-gray-500">If rejection occurs, log a rep.</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setRecoveryReps(prev => prev + 1)}
-                  className="w-10 h-10 border border-ascerta-purple flex items-center justify-center text-ascerta-purple font-bold active:bg-ascerta-purple active:text-white"
+                  className="w-10 h-10 border border-ascerta-purple flex items-center justify-center text-ascerta-purple font-bold active:bg-ascerta-purple active:text-white transition-colors"
                 >
                   +1
                 </button>
