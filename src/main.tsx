@@ -8,6 +8,8 @@ import { HomePage } from '@/pages/HomePage'
 import { CheckInPage } from '@/pages/CheckInPage'
 import { FramesPage } from '@/pages/FramesPage'
 import { CommitmentsPage } from '@/pages/CommitmentsPage'
+import { LedgerPage } from '@/pages/LedgerPage'
+import { InsightsPage } from '@/pages/InsightsPage'
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary'
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
@@ -20,6 +22,8 @@ const router = createBrowserRouter([
       { path: "check-in", element: <CheckInPage /> },
       { path: "frames", element: <FramesPage /> },
       { path: "commitments", element: <CommitmentsPage /> },
+      { path: "ledger", element: <LedgerPage /> },
+      { path: "insights", element: <InsightsPage /> },
     ]
   },
 ]);
