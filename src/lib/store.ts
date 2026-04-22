@@ -1,6 +1,6 @@
-import React from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { create } from 'zustand';
-import { format, subDays, isSameDay } from 'date-fns';
+import { format, subDays } from 'date-fns';
 // UI Ephemeral State
 interface AscertaState {
   isPrepareOpen: boolean;
@@ -33,38 +33,54 @@ export const AFFIRMATIONS = [
   "I am building a sustainable leadership path.",
   "My limits are my strengths."
 ];
-// Persistent Storage Hooks
+// Persistent Storage Hook with cross-tab/key-change synchronization
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
-  const [storedValue, setStoredValue] = React.useState<T>(() => {
+  // Use a ref to track the current key to detect changes without re-initializing during render
+  const keyRef = useRef(key);
+  const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      if (item === null) return initialValue;
+      return JSON.parse(item);
     } catch (error) {
-      console.error(error);
+      console.error(`Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
+  // Synchronize state if the key changes (e.g. date transition)
+  useEffect(() => {
+    if (keyRef.current !== key) {
+      keyRef.current = key;
+      try {
+        const item = window.localStorage.getItem(key);
+        setStoredValue(item ? JSON.parse(item) : initialValue);
+      } catch (e) {
+        setStoredValue(initialValue);
+      }
+    }
+  }, [key, initialValue]);
   const setValue = (value: T | ((prev: T) => T)) => {
     try {
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
-      console.error(error);
+      console.error(`Error setting localStorage key "${key}":`, error);
     }
   };
   return [storedValue, setValue];
 }
-// Specialized Hook for Daily Logs (Pillars, Pulses, etc.)
+// Specialized Hook for Daily Logs
 export function useDailyLog<T>(prefix: string, initialValue: T) {
   const today = getTodayStr();
-  return useLocalStorage<T>(`${prefix}_${today}`, initialValue);
+  const key = `${prefix}_${today}`;
+  return useLocalStorage<T>(key, initialValue);
 }
 // Shame Protocol Logic: Check if Voice Pillar is missing for last 5 days
 export function useShameProtocol() {
-  const checkDays = 5;
-  const isTriggered = React.useMemo(() => {
+  const isTriggered = useMemo(() => {
     let missingCount = 0;
+    const checkDays = 5;
     for (let i = 0; i < checkDays; i++) {
       const d = format(subDays(new Date(), i), 'yyyy-MM-dd');
       const data = window.localStorage.getItem(`Ascerta_voice_daily_${d}`);
@@ -76,10 +92,11 @@ export function useShameProtocol() {
 }
 // Streak Calculation
 export function useStreak() {
-  const streak = React.useMemo(() => {
+  const streak = useMemo(() => {
     let count = 0;
     let curr = new Date();
-    while (true) {
+    // Safety limit to prevent infinite loops if storage is weird
+    for (let i = 0; i < 365; i++) {
       const d = format(curr, 'yyyy-MM-dd');
       const data = window.localStorage.getItem(`Ascerta_checkin_${d}`);
       if (data) {

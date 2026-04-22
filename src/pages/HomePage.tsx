@@ -1,42 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocalStorage, getDayOfYear, getTodayStr, AFFIRMATIONS, useDailyLog } from '@/lib/store';
-import { Shield, Zap, ChevronRight, Edit3, Bell } from 'lucide-react';
+import { Zap, Edit3, Bell } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 export function HomePage() {
+  // Hooks must be called in the exact same order every render
   const today = getTodayStr();
-  const [identityRules, setIdentityRules] = useLocalStorage<string[]>('Ascerta_identity_rules', [
+  const [identityRules] = useLocalStorage<string[]>('Ascerta_identity_rules', [
     'I do not apologize for having needs.',
     'I finish my sentences without trailing off.',
     'I pause before saying yes.'
   ]);
-  const [pulse, setPulse] = useDailyLog<string>('Ascerta_pulse', '');
+  const [pulse, setPulse] = useDailyLog<string>('Ascerta_pulse', 'Neutral');
   const [capacity, setCapacity] = useDailyLog<Record<string, string>>('Ascerta_capacity', {
     physical: 'neutral',
     emotional: 'neutral',
     mental: 'neutral',
     relational: 'neutral'
   });
-  const [notifTime, setNotifTime] = useLocalStorage('Ascerta_notification_time', '07:00');
-  const [isRulesEditing, setIsRulesEditing] = React.useState(false);
+  const [isRulesEditing, setIsRulesEditing] = useState(false);
   const dayIndex = getDayOfYear() % 12;
-  const [currentAffirmation, setCurrentAffirmation] = React.useState(dayIndex);
+  const [currentAffirmation, setCurrentAffirmation] = useState(dayIndex);
   const handlers = useSwipeable({
     onSwipedLeft: () => setCurrentAffirmation(prev => (prev + 1) % 12),
     onSwipedRight: () => setCurrentAffirmation(prev => (prev - 1 + 12) % 12),
+    trackMouse: true
   });
-  const progressCount = [pulse, ...Object.values(capacity)].filter(v => v !== '' && v !== 'neutral').length;
+  const progressCount = [
+    pulse !== 'Neutral' ? 1 : 0,
+    ...Object.values(capacity).map(v => (v !== 'neutral' ? 1 : 0))
+  ].reduce((a, b) => a + b, 0);
   const progressPercent = (progressCount / 5) * 100;
   return (
     <div className="p-6 space-y-8 animate-in fade-in duration-700">
       <header className="flex justify-between items-start">
         <div className="space-y-1">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">{format(new Date(), 'EEEE, MMM d')}</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+            {format(new Date(), 'EEEE, MMM d')}
+          </p>
           <h1 className="text-2xl font-semibold text-gray-900">Welcome, Elena</h1>
         </div>
-        <Link to="/insights" className="p-2 text-gray-400"><Bell size={20} /></Link>
+        <Link to="/insights" className="p-2 text-gray-400">
+          <Bell size={20} />
+        </Link>
       </header>
       {/* Energy Banner */}
       <div className={cn(
@@ -47,8 +56,8 @@ export function HomePage() {
         <div className="space-y-1">
           <h4 className="text-sm font-bold uppercase tracking-tight">Strategy Note</h4>
           <p className="text-xs text-gray-600 leading-relaxed">
-            {pulse === 'Depleted' 
-              ? "Energy is low. Prioritize structural tasks today and delegate emotional labor." 
+            {pulse === 'Depleted'
+              ? "Energy is low. Prioritize structural tasks today and delegate emotional labor."
               : pulse === 'Abundance'
               ? "Capacity is high. Ideal for high-stakes advocacy and political framing."
               : "Stability is key today. Focus on pace and boundary maintenance."}
@@ -56,14 +65,20 @@ export function HomePage() {
         </div>
       </div>
       {/* Swipeable Affirmation */}
-      <div {...handlers} className="space-y-3 cursor-grab active:cursor-grabbing">
+      <div {...handlers} className="space-y-3 cursor-grab active:cursor-grabbing touch-none">
         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Daily Anchor</h3>
         <p className="font-serif italic text-lg leading-relaxed text-ascerta-purple min-h-[3.5rem]">
           "{AFFIRMATIONS[currentAffirmation]}"
         </p>
         <div className="flex gap-1 justify-center">
           {AFFIRMATIONS.map((_, i) => (
-            <div key={i} className={cn("w-1 h-1 rounded-full", i === currentAffirmation ? "bg-ascerta-purple" : "bg-gray-200")} />
+            <div 
+              key={i} 
+              className={cn(
+                "w-1 h-1 transition-colors", 
+                i === currentAffirmation ? "bg-ascerta-purple" : "bg-gray-200"
+              )} 
+            />
           ))}
         </div>
       </div>
@@ -89,7 +104,10 @@ export function HomePage() {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Identity Rules</h3>
-          <button onClick={() => setIsRulesEditing(!isRulesEditing)} className="text-gray-400 hover:text-ascerta-purple">
+          <button 
+            onClick={() => setIsRulesEditing(!isRulesEditing)} 
+            className="text-gray-400 hover:text-ascerta-purple"
+          >
             <Edit3 size={14} />
           </button>
         </div>
@@ -102,7 +120,7 @@ export function HomePage() {
         </div>
       </div>
       {/* Capacity Grid */}
-      <div className="space-y-4 pb-8">
+      <div className="space-y-4">
         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Capacity Snapshot</h3>
         <div className="grid grid-cols-2 gap-3">
           {Object.entries(capacity).map(([key, val]) => (
@@ -129,13 +147,15 @@ export function HomePage() {
           <span>{Math.round(progressPercent)}%</span>
         </div>
         <div className="h-1 bg-gray-100 w-full overflow-hidden">
-          <div className="h-full bg-ascerta-purple transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+          <div 
+            className="h-full bg-ascerta-purple transition-all duration-500" 
+            style={{ width: `${progressPercent}%` }} 
+          />
         </div>
       </div>
-      <Button asChild className="w-full h-14 bg-ascerta-purple text-white font-bold uppercase tracking-widest" variant="default">
+      <Button asChild className="w-full h-14 bg-ascerta-purple text-white font-bold uppercase tracking-widest rounded-none shadow-none">
         <Link to="/check-in">Begin Today's Check-in</Link>
       </Button>
     </div>
   );
 }
-import { format } from 'date-fns';
