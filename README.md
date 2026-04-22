@@ -1,6 +1,6 @@
 # Cloudflare Workers Full-Stack React Template
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/victorianwobodo/pwa.fix)
 
 A production-ready full-stack application template built on Cloudflare Workers. Features a modern React frontend with shadcn/ui components, Tailwind CSS, and a type-safe API backend powered by Hono and Durable Objects for scalable, stateful data persistence (users, chats, messages).
 
@@ -129,7 +129,7 @@ Edit `shared/mock-data.ts` and `worker/entities.ts` static `seedData`.
    bunx wrangler deploy --name <worker-name>
    ```
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/victorianwobodo/pwa.fix)
 
 Your app is now live on `*.workers.dev` or custom domain. Durable Objects auto-scale globally.
 
